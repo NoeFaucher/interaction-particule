@@ -7,5 +7,9 @@ edition = "2021"
 
 [dependencies]
 rand = "0.8.x"
-gtk = { git = "https://github.com/gtk-rs/gtk3-rs.git" }
-cairo-rs = { git = "https://github.com/gtk-rs/gtk-rs-core.git", package = "cairo-rs" }
+
+
+[dependencies.gtk]
+package = "gtk4"
+version = "0.6.6"
+features = ["v4_2"]
