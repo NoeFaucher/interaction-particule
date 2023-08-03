@@ -68,32 +68,32 @@ impl Particule {
         // interaction(particules, &test , 1.0);
         
 
-        rule(String::from("red"),String::from("red"),-1.,particules_map);
-        rule(String::from("red"),String::from("blue"),-1.,particules_map);
-        rule(String::from("red"),String::from("green"),-0.5,particules_map);
-        rule(String::from("red"),String::from("yellow"),-0.5,particules_map);
-        // rule(String::from("blue"),String::from("red"),-1.,particules_map);
+        rule(String::from("red"),String::from("red"),-1.,particules_map,8.);
+        rule(String::from("red"),String::from("blue"),1.,particules_map,10.);
+        rule(String::from("red"),String::from("green"),-0.5,particules_map,20.);
+        rule(String::from("red"),String::from("yellow"),0.5,particules_map,20.);
+        rule(String::from("blue"),String::from("red"),-1.,particules_map, 50.);
 
-        rule(String::from("blue"),String::from("blue"),0.05,particules_map);
-        rule(String::from("blue"),String::from("red"),-1.,particules_map);
-        rule(String::from("blue"),String::from("green"),-1.,particules_map);
-        rule(String::from("blue"),String::from("yellow"),-1.,particules_map);
+        rule(String::from("blue"),String::from("blue"),0.05,particules_map,20.);
+        rule(String::from("blue"),String::from("red"),1.,particules_map,30.);
+        rule(String::from("blue"),String::from("green"),-1.,particules_map,20.);
+        rule(String::from("blue"),String::from("yellow"),-1.,particules_map,20.);
 
-        rule(String::from("green"),String::from("blue"),-1.,particules_map);
-        rule(String::from("green"),String::from("red"),-1.,particules_map);
-        rule(String::from("green"),String::from("green"),-1.,particules_map);
-        rule(String::from("green"),String::from("yellow"),-2.,particules_map);
+        rule(String::from("green"),String::from("blue"),-1.,particules_map,20.);
+        rule(String::from("green"),String::from("red"),-1.,particules_map,10.);
+        rule(String::from("green"),String::from("green"),1.,particules_map,20.);
+        rule(String::from("green"),String::from("yellow"),-1.,particules_map,20.);
 
-        rule(String::from("yellow"),String::from("blue"),-1.,particules_map);
-        rule(String::from("yellow"),String::from("red"),-0.5,particules_map);
-        rule(String::from("yellow"),String::from("green"),0.1,particules_map);
-        rule(String::from("yellow"),String::from("yellow"),-5.,particules_map);
+        rule(String::from("yellow"),String::from("blue"),-1.,particules_map,10.);
+        rule(String::from("yellow"),String::from("red"),-2.,particules_map,20.);
+        rule(String::from("yellow"),String::from("green"),1.,particules_map,20.);
+        rule(String::from("yellow"),String::from("yellow"),-0.2,particules_map,20.);
     }
 
-pub fn rule(group1_name: String, group2_name: String, g: f64, particules_map: &mut HashMap<String,Vec<Particule>>)  {
+pub fn rule(group1_name: String, group2_name: String, g: f64, particules_map: &mut HashMap<String,Vec<Particule>>, d:f64)  {
     let particules_map_copy = particules_map.clone();
     
-    interaction(particules_map.get_mut(&group1_name).unwrap(), particules_map_copy.get(&group2_name).unwrap(), g)
+    interaction(particules_map.get_mut(&group1_name).unwrap(), particules_map_copy.get(&group2_name).unwrap(), g, d)
 
     // return  particules_map.get(&group1_name).unwrap().clone();
 }
@@ -103,6 +103,7 @@ pub fn interaction(
     group1: &mut [Particule],
     group2: &[Particule],
     g: f64,
+    dist_limit: f64,
 ) {
     let g = -g;
 
@@ -111,34 +112,24 @@ pub fn interaction(
 
         for (j,b) in group2.into_iter().enumerate() {
 
-            if (i ==j) {
+            let mut d: f64 = a.pos.dist(b.pos);
+
+            if i ==j && d == 0. {
                 continue;
             }
-            a.acc.add(a.pos.clone().sub(b.pos).normalize().mult(g*b.mass* (1. / a.pos.dist(b.pos)) * (1. / a.pos.dist(b.pos))));
+
+            if d < 0.05 {
+                d = 0.05;
+            }
+
+
+            if d < dist_limit {
+                continue;
+            }
+
+            a.acc.add(a.pos.clone().sub(b.pos).normalize().mult(g*b.mass* (1. / d ) * (1. / d)));
 
             
-
-            // let dx = a.pos.dist_x(b.pos);
-            // let dy = a.pos.dist_y(b.pos);
-
-
-
-        //     let mut d =  (dx*dx + dy*dy).sqrt();
-
-        //     if d == 0.0 {
-        //         if i == j {
-        //             continue;
-        //         } else {
-        //             d = 0.01;
-        //         }
-        //     }
-            
-        //     let f = g * b.mass / d;
-
-        //     new_acc.add(Vect::new(
-        //         f * dx,
-        //         f * dy
-        //     ));
 
         }
 
