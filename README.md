@@ -38,10 +38,7 @@ Example `rules.json`:
 ```
 Demo video
 
-<video controls width="640">
-	<source src="docs/demo.mp4" type="video/mp4">
-	Your browser does not support the video tag. Visit `docs/demo.mp4` to view the demo.
-</video>
+![demo animation](docs/demo.gif)
 
 Quick start
 
