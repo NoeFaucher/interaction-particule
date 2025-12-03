@@ -1,0 +1,22 @@
+[
+  {"group1": "red",    "group2": "red",    "g": 0.1,  "d": 18.0},
+  {"group1": "red",    "group2": "blue",   "g": -0.6,  "d": 30.0},
+  {"group1": "red",    "group2": "green",  "g": -0.1,  "d": 30.0},
+  {"group1": "red",    "group2": "yellow", "g": -0.5,  "d": 28.0},
+
+  {"group1": "blue",   "group2": "blue",   "g": 0.10,  "d": 18.0},
+  {"group1": "blue",   "group2": "red",    "g": -0.6,  "d": 30.0},
+  {"group1": "blue",   "group2": "green",  "g": 0.2, "d": 28.0},
+  {"group1": "blue",   "group2": "yellow", "g": -0.65, "d": 30.0},
+
+  {"group1": "green",  "group2": "green",  "g": 0.22,  "d": 18.0},
+  {"group1": "green",  "group2": "red",    "g": -0.7,  "d": 30.0},
+  {"group1": "green",  "group2": "blue",   "g": -0.2, "d": 28.0},
+  {"group1": "green",  "group2": "yellow", "g": -0.6,  "d": 28.0},
+
+  {"group1": "yellow", "group2": "yellow", "g": 0.12,  "d": 18.0},
+  {"group1": "yellow", "group2": "red",    "g": -0.1,  "d": 28.0},
+  {"group1": "yellow", "group2": "blue",   "g": -0.65, "d": 30.0},
+  {"group1": "yellow", "group2": "green",  "g": -0.6,  "d": 28.0}
+]
+

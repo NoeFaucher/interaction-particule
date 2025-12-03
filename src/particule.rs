@@ -1,7 +1,7 @@
 use rand::Rng;
 use gtk::cairo::Context;
 use std::{f64::consts::PI, borrow::BorrowMut, collections::HashMap};
-
+use serde::Deserialize;
 use num::Num;
 
 use crate::config_constant::{WIDTH, HEIGHT};
@@ -26,7 +26,13 @@ pub struct Particule {
     mass: f64,
 }
 
-
+#[derive(Deserialize)]
+pub struct RuleEntry {
+    pub group1: String,
+    pub group2: String,
+    pub g: f64,
+    pub d: f64,
+}
 
 impl Particule {
 
@@ -61,41 +67,29 @@ impl Particule {
 }
 
 
-    pub fn update(particules_map: &mut HashMap<String,Vec<Particule>>) {
+pub fn update(particules_map: &mut HashMap<String,Vec<Particule>>, rules: &Vec<RuleEntry>,dt: f64) {
 
-        // let test = particules_map.clone();
+    // let test = particules_map.clone();
 
-        // interaction(particules, &test , 1.0);
-        
+    // interaction(particules, &test , 1.0);
+    
 
-        rule(String::from("red"),String::from("red"),-1.,particules_map,8.);
-        rule(String::from("red"),String::from("blue"),1.,particules_map,10.);
-        rule(String::from("red"),String::from("green"),-0.5,particules_map,20.);
-        rule(String::from("red"),String::from("yellow"),0.5,particules_map,20.);
-        rule(String::from("blue"),String::from("red"),-1.,particules_map, 50.);
-
-        rule(String::from("blue"),String::from("blue"),0.05,particules_map,20.);
-        rule(String::from("blue"),String::from("red"),1.,particules_map,30.);
-        rule(String::from("blue"),String::from("green"),-1.,particules_map,20.);
-        rule(String::from("blue"),String::from("yellow"),-1.,particules_map,20.);
-
-        rule(String::from("green"),String::from("blue"),-1.,particules_map,20.);
-        rule(String::from("green"),String::from("red"),-1.,particules_map,10.);
-        rule(String::from("green"),String::from("green"),1.,particules_map,20.);
-        rule(String::from("green"),String::from("yellow"),-1.,particules_map,20.);
-
-        rule(String::from("yellow"),String::from("blue"),-1.,particules_map,10.);
-        rule(String::from("yellow"),String::from("red"),-2.,particules_map,20.);
-        rule(String::from("yellow"),String::from("green"),1.,particules_map,20.);
-        rule(String::from("yellow"),String::from("yellow"),-0.2,particules_map,20.);
+    for r in rules.iter() {
+        rule(
+            r.group1.clone(),
+            r.group2.clone(),
+            r.g,
+            particules_map,
+            r.d,
+            dt,
+        );
     }
+}
 
-pub fn rule(group1_name: String, group2_name: String, g: f64, particules_map: &mut HashMap<String,Vec<Particule>>, d:f64)  {
+pub fn rule(group1_name: String, group2_name: String, g: f64, particules_map: &mut HashMap<String,Vec<Particule>>, d: f64, dt: f64)  {
     let particules_map_copy = particules_map.clone();
     
-    interaction(particules_map.get_mut(&group1_name).unwrap(), particules_map_copy.get(&group2_name).unwrap(), g, d)
-
-    // return  particules_map.get(&group1_name).unwrap().clone();
+    interaction(particules_map.get_mut(&group1_name).unwrap(), particules_map_copy.get(&group2_name).unwrap(), g, d, dt)
 }
 
 
@@ -104,6 +98,7 @@ pub fn interaction(
     group2: &[Particule],
     g: f64,
     dist_limit: f64,
+    dt: f64,
 ) {
     let g = -g;
 
@@ -112,9 +107,31 @@ pub fn interaction(
 
         for (j,b) in group2.into_iter().enumerate() {
 
-            let mut d: f64 = a.pos.dist(b.pos);
+            // Compute shortest (toroidal) vector from b to a, taking wrap-around
+            // into account so particles near opposite edges interact.
+            let mut dx = a.pos.x - b.pos.x;
+            let mut dy = a.pos.y - b.pos.y;
 
-            if i ==j && d == 0. {
+            // wrap on x axis
+            if dx.abs() > (WIDTH / 2.0) {
+                if dx > 0.0 {
+                    dx -= WIDTH;
+                } else {
+                    dx += WIDTH;
+                }
+            }
+            // wrap on y axis
+            if dy.abs() > (HEIGHT / 2.0) {
+                if dy > 0.0 {
+                    dy -= HEIGHT;
+                } else {
+                    dy += HEIGHT;
+                }
+            }
+
+            let mut d = (dx * dx + dy * dy).sqrt();
+
+            if i == j && d == 0.0 {
                 continue;
             }
 
@@ -122,41 +139,34 @@ pub fn interaction(
                 d = 0.05;
             }
 
-
             if d < dist_limit {
                 continue;
             }
 
-            a.acc.add(a.pos.clone().sub(b.pos).normalize().mult(g*b.mass* (1. / d ) * (1. / d)));
-
-            
-
+            let mut dir = Vect::new(dx, dy);
+            a.acc.add(dir.normalize().mult(g * b.mass * (1.0 / d) * (1.0 / d)));
         }
 
-
+    // println!("{}",dt);
         a.vel.add(a.acc);
-        a.pos.add(a.vel.mult(0.999));
+        a.pos.add(a.vel.mult(0.999).clone().mult(dt));
         a.acc = Vect::new_zero();
         
-        if(a.pos.x <= 0.0 || a.pos.x >= WIDTH) {
-            a.vel.x = a.vel.x * (-1.0);
 
-            if (a.pos.x >= WIDTH) {
-                a.pos.x = WIDTH;
-            }
-            if (a.pos.x <= 0.0) {
-                a.pos.x = 0.0;
-            }
-
+        // Cyclic/toroidal boundary: wrap positions around instead of bouncing.
+        // Use while loops to handle any out-of-range values robustly.
+        while a.pos.x < 0.0 {
+            a.pos.x += WIDTH;
         }
-        if(a.pos.y <= 0.0 || a.pos.y >= HEIGHT) {
-            a.vel.y = a.vel.y * (-1.0);
-            if (a.pos.y >= HEIGHT) {
-                a.pos.y = HEIGHT;
-            }
-            if (a.pos.y <= 0.0) {
-                a.pos.y = 0.0;
-            }
+        while a.pos.x >= WIDTH {
+            a.pos.x -= WIDTH;
+        }
+
+        while a.pos.y < 0.0 {
+            a.pos.y += HEIGHT;
+        }
+        while a.pos.y >= HEIGHT {
+            a.pos.y -= HEIGHT;
         }
 
 
